@@ -58,7 +58,7 @@ def getvals(lst,tablename):
         id=100
     
     for i in res:
-        id=id+1
+        
         txt=i[1]
         Cat_res=i[2]
         lst.append({
@@ -66,6 +66,7 @@ def getvals(lst,tablename):
                 f"{tablename}_str": txt,
                 "Category": Cat_res 
             })
+        id=id+1
 
 getvals(resume,"resume")
 getvals(job_desc,"JD")
@@ -147,7 +148,7 @@ def extract_experience_years(text):
     return 0
 
 
-def calculate_combined_match_score(input_resume,job_description,nlp,model=SentenceTransformer('all-MiniLM-L6-v2'),skill_exact_weight=0.0,skill_semantic_weight=0.7,experience_weight=0.3):
+def calculate_combined_match_score(input_resume,job_description,nlp,model=SentenceTransformer('all-mpnet-base-v2'),skill_exact_weight=0.0,skill_semantic_weight=0.7,experience_weight=0.3):
     model.eval()
     input_resume_cleaned = clean_resume_text(input_resume.lower())
     job_description_cleaned = clean_resume_text(job_description.lower())
@@ -202,7 +203,7 @@ jd_input = input("Select the role: ")
 
 # Reset index to use iloc safely
 resumes = df_resume[df_resume["Category"] == jd_input][["ID", "resume_str"]].reset_index(drop=True)
-resclas=df_resume["resume_str"]
+resclas=df_resume[df_resume["Category"]==jd_input]["resume_str"]
 
 
 # def predict_role(resumes):
@@ -223,9 +224,9 @@ jds = df_JD[df_JD["Category"] == jd_input][["ID", "JD_str"]].reset_index(drop=Tr
 final_scores = []
 
 for i in range(len(jds)):
-    for j in range(len(resclas)):
+    for j in range(len(resumes)):
         jd_text = jds.iloc[i]["JD_str"]
-        res_text = resclas.iloc[j]
+        res_text = resumes.iloc[j]["resume_str"]
         score = calculate_combined_match_score(res_text, jd_text, nlp)
 
         res_id = resumes.iloc[j]["ID"]
@@ -234,10 +235,10 @@ for i in range(len(jds)):
         final_scores.append((jd_id, res_id, score))
 
 # Sort by score descending
-top_10 = sorted(final_scores, key=lambda x: x[2], reverse=True)[:10]
+top = sorted(final_scores, key=lambda x: x[2], reverse=True)[:10]
 
 # Print results
 print("\nTop 10 Resume Scores for the job of",jd_input)
-for rank, (jd_id, res_id, score) in enumerate(top_10, 1):
+for rank, (jd_id, res_id, score) in enumerate(top, 1):
     print(f"{rank}. Resume ID: {res_id} — Score: {score:.4f}")
     
